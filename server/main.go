@@ -12,15 +12,26 @@ var todoList = []map[string]interface{}{
 
 func main() {
 	r := gin.Default()
-	r.GET("/", showTodoList)
-	r.POST("/", createTodo)
-	r.POST("/deleteAll", deleteAllTodo)
-	r.POST("/delete", deleteTodo)
-	r.POST("/update", updateTodo)
+	r_Cors := r.Group("/", Cors())
+	r_Cors.GET("/", showTodoList)
+	r_Cors.POST("/", createTodo)
+	r_Cors.POST("/deleteAll", deleteAllTodo)
+	r_Cors.POST("/delete", deleteTodo)
+	r_Cors.POST("/update", updateTodo)
 	r.Run()
 }
 
 var todoID = 1
+
+func Cors() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		origin := c.Request.Header.Get("Origin")
+		if origin != "" {
+			c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		}
+		c.Next()
+	}
+}
 
 func updateTodo(c *gin.Context) {
 	if id := c.Request.FormValue("id"); id == "" {
