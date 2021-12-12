@@ -14,7 +14,7 @@
                 <h1 class="text-xl font-bold mb-2">TodoList</h1>
                 <div class="w-full">
                     <input class="w-4/5 p-1 border-b border-green-900 focus:border-b-2 focus:border-green-800" placeholder="待辦事項......"
-                        id="thing" v-model.trim='thing' type="text">
+                        id="thing" v-model.trim='thing' type="text" @keypress.enter="add">
                     <button class="w-1/5 p-px bg-green-600 text-white hover:bg-green-500 rounded-full" v-on:click="add">+</button>
                 </div>
                 
@@ -22,7 +22,7 @@
                     <li v-for='item in todos' v-bind:key='item.id'>
                         {{ item.todo }}
                         <!-- <button @click="edit">Edit</button> -->
-                        <button class="float-right	" @click="deleteOne(item.id)">✔️</button>
+                        <button class="float-right" @click="deleteOne(item.id)">✔️</button>
                     </li>
                 </ul>
                 
@@ -39,7 +39,6 @@
     <script src="https://unpkg.com/vue@next"></script>
     <script>
         const dataURL = 'http://localhost:8080';
-        // const dataURL = 'http://localhost:8080';
         const datas = new Array();
         
         function getAllData(){
@@ -119,6 +118,10 @@
                     deleteData(id)
                     .then((res)=>{
                         this.todos = this.todos.filter(elem => elem.id != id);
+                    })
+                    .catch(function(err){
+                        alert("error");
+                        console.error(err);
                     })
                 },
                 
