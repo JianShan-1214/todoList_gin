@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-tw">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+    <title>TodoList CSR</title>
+</head>
+<body class="bg-gray-100">
+    <div class="h-screen">
+        <div class="container p-px mx-auto">
+            <div class="w-4/5 md:3/5 lg:w-2/5 bg-white mx-auto mt-4 border-gray-100 shadow p-5 rounded-sm" id="app">
+                <h1 class="text-xl font-bold mb-2">TodoList</h1>
+                <div class="w-full">
+                    <input class="w-4/5 p-1 border-b border-green-900 focus:border-b-2 focus:border-green-800" placeholder="待辦事項......"
+                        id="thing" v-model.trim='thing' type="text">
+                    <button class="w-1/5 p-px bg-green-600 text-white hover:bg-green-500 rounded-full" v-on:click="add">+</button>
+                </div>
+                
+                <ul class="list-disc m-4">
+                    <li v-for='item in todos' v-bind:key='item.id'>
+                        {{ item.todo }}
+                        <!-- <button @click="edit">Edit</button> -->
+                        <button class="float-right	" @click="deleteOne(item.id)">✔️</button>
+                    </li>
+                </ul>
+                
+                
+                <div class="grid grid-cols-3 gap-2 w-full mt-1"> 
+                    <button class="mx-px border rounded border-green-600 text-green-600 hover:bg-green-600 hover:text-white" @click="deleteAll">清除全部</button>
+                    <button class="mx-px border rounded border-green-600 text-green-600 hover:bg-green-600 hover:text-white" @click="download">下載資料</button>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const dataURL = 'http://localhost:8080';
+        // const dataURL = 'http://localhost:8080';
+        const datas = new Array();
+        
+        function getAllData(){
+            fetch(dataURL)
+            .then(function(response) {
+                if(!response.ok) throw new Error('Cannot fetch data!');
+                return response.json();
+            })
+            .then(function(myJson) {
+                console.log(myJson);
+                for(data of myJson) {
+                    //console.log(data.todo);
+                    datas.push({id: data.id, todo:data.todo});
+                }
+            }).then(function(){
+                vm.mount('#app');
+            });
+        }
+        getAllData();
+
+        function postData(data) {
+            console.log(data);
+            return fetch(dataURL,{
+                // body: {todo: data},
+                body: `todo=${data}`,
+                method: "POST",
+                headers: new Headers({
+                    // 'Content-Type': 'application/json'
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                })
+            })
+        }
+
+        function deleteData(id){
+            return fetch(`${dataURL}/delete`, {
+                body: `id=${id}`,
+                method: "POST",
+                headers: new Headers({
+                    // 'Content-Type': 'application/json'
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                })
+            });
+        }
+
+        function deleteAllData(){
+            return fetch(`${dataURL}/deleteAll`, {
+                method: "POST"
+            });
+        }
+        
+
+        const vm = Vue.createApp({
+            data() {
+                return {
+                    thing: '',
+                    todos: datas
+                }
+            },
+            methods: {
+                add () {
+                    postData(this.thing)
+                    .then((res)=>{
+                        return res.json();
+                    })
+                    .then((resJson)=>{
+                        this.todos.push({id: resJson.id,todo: this.thing});
+                        this.thing = '';
+                    })
+                    .catch(function(err){
+                        alert("error");
+                        console.error(err);
+                    })
+                },
+
+                deleteOne(id) {
+                    // console.log(event);
+                    deleteData(id)
+                    .then((res)=>{
+                        this.todos = this.todos.filter(elem => elem.id != id);
+                    })
+                },
+                
+                deleteAll() {
+                    deleteAllData()
+                    .then((res)=>{
+                        this.todos=[];
+                    })
+                    .catch(function(err){
+                        alert("error");
+                    })
+                },
+
+                download () {
+                    const href = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(this.todos));
+                    const download = document.createElement('a');
+                    download.setAttribute('href', href);
+                    download.setAttribute('download', 'TodoList.json');
+                    download.click();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
